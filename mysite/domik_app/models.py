@@ -1,9 +1,12 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
 
 
 Floor_CHOICES = [(str(i), str(i)) for i in range(1, 5)]
 
+class UserProfile(AbstractUser):
+    avatar = models.ImageField(upload_to='user_avatar')
 
 class Category(models.Model):
     category_name = models.CharField(max_length=64)
@@ -75,12 +78,22 @@ class House(models.Model):
         return self.title
 
 
+    def get_avg_rating(self):
+        reviews = self.house_review.all()
+        if reviews.exists():
+            return round(sum(r.service_score for r in reviews if r.service_score) / reviews.count(), 1)
+        return None
+
+    def get_count_reviews(self):
+        return self.house_review.count()
+
 class HouseImage(models.Model):
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='house_images')
     image = models.ImageField(upload_to='house_image/')
 
 class Review(models.Model):
-    house = models.ForeignKey(House, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='house_review')
     service_score = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
@@ -88,7 +101,20 @@ class Review(models.Model):
     def __str__(self):
         return self.comment
 
+class Favorite(models.Model):
+    user = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user}'
 
 
+class FavoriteHouse(models.Model):
+    house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='favorite_houses')
+    favorite = models.ForeignKey(Favorite, on_delete=models.CASCADE)
+    created_date = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f'{self.house} {self.favorite}'
 
+    class Meta:
+        unique_together = ('house', 'favorite')
