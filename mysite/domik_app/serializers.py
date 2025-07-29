@@ -18,7 +18,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop('password')
-        user = User(**validated_data)
+        email = validated_data.get('email')
+        user = User(username=email, **validated_data)
         user.set_password(password)
         user.save()
         return user
