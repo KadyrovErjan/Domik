@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 Floor_CHOICES = [(str(i), str(i)) for i in range(1, 5)]
 
 class UserProfile(AbstractUser):
-    avatar = models.ImageField(upload_to='user_avatar')
+    avatar = models.ImageField(upload_to='user_avatar', null=True, blank=True)
 
 class Category(models.Model):
     category_name = models.CharField(max_length=64)
@@ -49,21 +49,13 @@ class House(models.Model):
     area = models.PositiveSmallIntegerField()
     plot = models.PositiveSmallIntegerField()
     count_people = models.PositiveSmallIntegerField(default=1)
-    weekdays_title = models.CharField(max_length=24)
     weekdays_price = models.PositiveIntegerField()
-    saturday_title = models.CharField(max_length=24)
     saturday_price = models.PositiveIntegerField()
-    friday_title = models.CharField(max_length=24)
     friday_price = models.PositiveIntegerField()
-    sunday_title = models.CharField(max_length=24)
     sunday_price = models.PositiveIntegerField()
-    pledge_title = models.CharField(max_length=24)
     pledge_price = models.PositiveIntegerField()
-    weekends_title = models.CharField(max_length=200)
     weekends_price = models.PositiveIntegerField()
-    new_year_title = models.CharField(max_length=200)
     new_year_price = models.PositiveIntegerField()
-    party_title = models.CharField(max_length=200)
     party_price = models.PositiveIntegerField()
     description = models.TextField()
     additional_fees = models.TextField()
@@ -74,10 +66,6 @@ class House(models.Model):
         if self.entry > self.departure:
             raise ValidationError("'entry' can't be higher than 'departure'")
 
-    def __str__(self):
-        return self.title
-
-
     def get_avg_rating(self):
         reviews = self.house_review.all()
         if reviews.exists():
@@ -87,6 +75,8 @@ class House(models.Model):
     def get_count_reviews(self):
         return self.house_review.count()
 
+    def __str__(self):
+        return self.title
 class HouseImage(models.Model):
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='house_images')
     image = models.ImageField(upload_to='house_image/')
